@@ -1,12 +1,11 @@
 import React from 'react';
 import styled from '@emotion/styled';
-import { motion, Reorder } from 'framer-motion';
+import { Reorder } from 'framer-motion';
 import { Todo } from '../types';
 import TodoItem from './TodoItem';
 
 interface TodoListProps {
   todos: Todo[];
-  onUpdate: (id: string, todo: Todo) => void;
   onDelete: (id: string) => void;
   onToggle: (id: string) => void;
   onReorder: (startIndex: number, endIndex: number) => void;
@@ -29,7 +28,6 @@ const EmptyState = styled.div`
 
 const TodoList: React.FC<TodoListProps> = ({
   todos,
-  onUpdate,
   onDelete,
   onToggle,
   onReorder,
@@ -59,7 +57,6 @@ const TodoList: React.FC<TodoListProps> = ({
           <Reorder.Item key={todo.id} value={todo}>
             <TodoItem
               todo={todo}
-              onUpdate={onUpdate}
               onDelete={onDelete}
               onToggle={onToggle}
               onAddCollaborator={onAddCollaborator}

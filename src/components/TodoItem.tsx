@@ -7,7 +7,6 @@ import CollaboratorModal from './CollaboratorModal';
 
 interface TodoItemProps {
   todo: Todo;
-  onUpdate: (id: string, todo: Todo) => void;
   onDelete: (id: string) => void;
   onToggle: (id: string) => void;
   onAddCollaborator: (todoId: string, email: string) => Promise<void>;
@@ -142,7 +141,6 @@ const ShareIcon = styled.span`
 
 const TodoItem: React.FC<TodoItemProps> = ({
   todo,
-  onUpdate,
   onDelete,
   onToggle,
   onAddCollaborator,

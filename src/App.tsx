@@ -167,7 +167,6 @@ const TodoApp: React.FC = () => {
       }
 
       const collaborator = querySnapshot.docs[0];
-      const collaboratorData = collaborator.data();
       const todoRef = doc(db, 'todos', todoId);
       const todo = todos.find(t => t.id === todoId);
 
@@ -229,7 +228,6 @@ const TodoApp: React.FC = () => {
       <AddTodoForm onAdd={addTodo} />
       <TodoList
         todos={todos}
-        onUpdate={updateTodo}
         onDelete={deleteTodo}
         onToggle={toggleTodo}
         onReorder={reorderTodos}

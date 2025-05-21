@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import styled from '@emotion/styled';
-import { Todo, CollaboratorData } from '../types';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../firebase';
+import { Todo } from '../types';
 
 interface CollaboratorModalProps {
   todo: Todo;
