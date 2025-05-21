@@ -19,6 +19,7 @@ const ItemContainer = styled(motion.div)`
   padding: 16px;
   margin: 8px 0;
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   gap: 12px;
   cursor: pointer;
@@ -27,6 +28,10 @@ const ItemContainer = styled(motion.div)`
   
   &:hover {
     background-color: #333;
+  }
+
+  @media (max-width: 480px) {
+    flex-direction: column;
   }
 `;
 
@@ -39,6 +44,7 @@ const Checkbox = styled.input`
 
 const Content = styled.div<{ completed: boolean }>`
   flex: 1;
+  min-width: 0;
   text-decoration: ${props => props.completed ? 'line-through' : 'none'};
   color: ${props => props.completed ? '#666' : '#fff'};
 `;
@@ -66,8 +72,16 @@ const TimeInfo = styled.div`
 const ButtonGroup = styled.div`
   display: flex;
   gap: 8px;
-  align-items: flex-start;
+  align-items: center;
   margin-left: auto;
+  flex-wrap: wrap;
+  
+  @media (max-width: 480px) {
+    width: 100%;
+    margin-left: 0;
+    margin-top: 12px;
+    justify-content: flex-start;
+  }
 `;
 
 const Button = styled.button<{ variant?: 'danger' | 'secondary' }>`
@@ -90,6 +104,13 @@ const Button = styled.button<{ variant?: 'danger' | 'secondary' }>`
   display: flex;
   align-items: center;
   gap: 4px;
+  min-width: 80px;
+  justify-content: center;
+  white-space: nowrap;
+  
+  @media (max-width: 480px) {
+    flex: 1;
+  }
   
   &:hover {
     background-color: ${props => {
@@ -190,7 +211,9 @@ const TodoItem: React.FC<TodoItemProps> = ({
               </CollaboratorCount>
             )}
           </Title>
-          <Description>{todo.description}</Description>
+          {todo.description && (
+            <Description>{todo.description}</Description>
+          )}
           {todo.startTime && todo.endTime && (
             <TimeInfo>
               {todo.startTime} - {todo.endTime}

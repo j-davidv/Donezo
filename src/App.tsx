@@ -72,7 +72,6 @@ const TodoApp: React.FC = () => {
 
     console.log('Current user ID:', currentUser.uid);
     
-    // Query todos where user is either owner or collaborator
     const q = query(
       collection(db, 'todos'),
       where('sharedWith', 'array-contains', currentUser.uid)
@@ -80,13 +79,25 @@ const TodoApp: React.FC = () => {
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const todosData: Todo[] = [];
-      console.log('Number of todos found:', querySnapshot.size);
       querySnapshot.forEach((doc) => {
         const todoData = { ...doc.data() as Todo, id: doc.id };
-        console.log('Todo data:', todoData);
+        // Ensure order exists
+        if (typeof todoData.order !== 'number') {
+          todoData.order = 0;
+        }
         todosData.push(todoData);
       });
-      setTodos(todosData.sort((a, b) => (b.lastModifiedAt || 0) - (a.lastModifiedAt || 0)));
+
+      // Sort todos: incomplete first (sorted by order), then completed (sorted by last modified)
+      setTodos(todosData.sort((a, b) => {
+        if (a.completed === b.completed) {
+          if (!a.completed) {
+            return a.order - b.order;
+          }
+          return (b.lastModifiedAt || 0) - (a.lastModifiedAt || 0);
+        }
+        return a.completed ? 1 : -1;
+      }));
     });
 
     return () => unsubscribe();
@@ -96,6 +107,11 @@ const TodoApp: React.FC = () => {
     try {
       if (!currentUser) return;
       
+      // Get the highest order number from incomplete todos
+      const highestOrder = todos
+        .filter(t => !t.completed)
+        .reduce((max, todo) => Math.max(max, todo.order || 0), -1);
+      
       const newTodo = {
         ...todoData,
         completed: false,
@@ -103,7 +119,8 @@ const TodoApp: React.FC = () => {
         sharedWith: [currentUser.uid],
         collaborators: [],
         lastModifiedBy: currentUser.uid,
-        lastModifiedAt: Date.now()
+        lastModifiedAt: Date.now(),
+        order: highestOrder + 1
       };
 
       console.log('Creating new todo:', newTodo);
@@ -142,15 +159,64 @@ const TodoApp: React.FC = () => {
   const toggleTodo = async (id: string) => {
     const todo = todos.find(t => t.id === id);
     if (todo) {
-      await updateTodo(id, { ...todo, completed: !todo.completed });
+      const incompleteTodos = todos.filter(t => !t.completed && t.id !== id);
+      
+      await updateTodo(id, { 
+        ...todo, 
+        completed: !todo.completed,
+        // If marking as incomplete, put at the end of incomplete list
+        order: !todo.completed ? -1 : incompleteTodos.length,
+        lastModifiedAt: Date.now() 
+      });
+
+      // If marking as incomplete, update orders of other incomplete todos
+      if (todo.completed) {
+        const updates = incompleteTodos.map((t, index) => {
+          const todoRef = doc(db, 'todos', t.id);
+          return updateDoc(todoRef, { order: index });
+        });
+        await Promise.all(updates);
+      }
     }
   };
 
   const reorderTodos = async (startIndex: number, endIndex: number) => {
-    const newTodos = Array.from(todos);
-    const [removed] = newTodos.splice(startIndex, 1);
-    newTodos.splice(endIndex, 0, removed);
-    setTodos(newTodos);
+    try {
+      const incompleteTodos = todos.filter(t => !t.completed);
+      const updatedTodos = [...incompleteTodos];
+      const [movedTodo] = updatedTodos.splice(startIndex, 1);
+      updatedTodos.splice(endIndex, 0, movedTodo);
+
+      // Update local state immediately for smooth UI
+      const newTodos = [...todos];
+      const incompleteIds = new Set(incompleteTodos.map(t => t.id));
+      newTodos.sort((a, b) => {
+        if (a.completed === b.completed) {
+          if (!a.completed) {
+            const aIndex = updatedTodos.findIndex(t => t.id === a.id);
+            const bIndex = updatedTodos.findIndex(t => t.id === b.id);
+            return aIndex - bIndex;
+          }
+          return (b.lastModifiedAt || 0) - (a.lastModifiedAt || 0);
+        }
+        return a.completed ? 1 : -1;
+      });
+      setTodos(newTodos);
+
+      // Calculate and update orders in the database
+      const updates = updatedTodos.map((todo, index) => {
+        const newOrder = index * 1000; // Use larger intervals to allow for future insertions
+        return updateDoc(doc(db, 'todos', todo.id), {
+          order: newOrder,
+          lastModifiedAt: Date.now(),
+          lastModifiedBy: currentUser?.uid
+        });
+      });
+
+      await Promise.all(updates);
+    } catch (error) {
+      console.error('Error reordering todos:', error);
+    }
   };
 
   const addCollaborator = async (todoId: string, email: string) => {

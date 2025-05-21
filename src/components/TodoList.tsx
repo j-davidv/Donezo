@@ -34,6 +34,15 @@ const TodoList: React.FC<TodoListProps> = ({
   onAddCollaborator,
   onRemoveCollaborator,
 }) => {
+  // Keep track of incomplete todos in local state
+  const [localIncompleteTodos, setLocalIncompleteTodos] = React.useState(todos.filter(todo => !todo.completed));
+  const completedTodos = todos.filter(todo => todo.completed);
+
+  // Update local state when todos prop changes
+  React.useEffect(() => {
+    setLocalIncompleteTodos(todos.filter(todo => !todo.completed));
+  }, [todos]);
+
   if (todos.length === 0) {
     return (
       <EmptyState>
@@ -46,15 +55,27 @@ const TodoList: React.FC<TodoListProps> = ({
     <ListContainer>
       <Reorder.Group
         axis="y"
-        values={todos}
+        values={localIncompleteTodos}
         onReorder={(values) => {
-          const startIndex = todos.findIndex(todo => todo.id === values[0].id);
-          const endIndex = 0;
-          onReorder(startIndex, endIndex);
+          // Update local state immediately
+          setLocalIncompleteTodos(values);
+          
+          // Find the moved item
+          const movedItemId = values.find((item, index) => 
+            item.id !== localIncompleteTodos[index]?.id
+          )?.id;
+
+          if (movedItemId) {
+            const oldIndex = localIncompleteTodos.findIndex(t => t.id === movedItemId);
+            const newIndex = values.findIndex(t => t.id === movedItemId);
+            if (oldIndex !== newIndex) {
+              onReorder(oldIndex, newIndex);
+            }
+          }
         }}
       >
-        {todos.map((todo) => (
-          <Reorder.Item key={todo.id} value={todo}>
+        {localIncompleteTodos.map((todo) => (
+          <Reorder.Item key={todo.id} value={todo} drag>
             <TodoItem
               todo={todo}
               onDelete={onDelete}
@@ -65,6 +86,18 @@ const TodoList: React.FC<TodoListProps> = ({
           </Reorder.Item>
         ))}
       </Reorder.Group>
+
+      {/* Render completed todos without reordering */}
+      {completedTodos.map((todo) => (
+        <TodoItem
+          key={todo.id}
+          todo={todo}
+          onDelete={onDelete}
+          onToggle={onToggle}
+          onAddCollaborator={onAddCollaborator}
+          onRemoveCollaborator={onRemoveCollaborator}
+        />
+      ))}
     </ListContainer>
   );
 };

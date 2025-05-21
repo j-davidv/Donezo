@@ -104,7 +104,6 @@ const AddTodoForm: React.FC<AddTodoFormProps> = ({ onAdd }) => {
   const isFormValid = () => {
     return (
       formData.title.trim() !== '' &&
-      formData.description.trim() !== '' &&
       // Validate times only if at least one is filled
       ((!formData.startTime && !formData.endTime) || 
        (formData.startTime && formData.endTime))
@@ -118,9 +117,10 @@ const AddTodoForm: React.FC<AddTodoFormProps> = ({ onAdd }) => {
         placeholder="Task title"
         value={formData.title}
         onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+        required
       />
       <TextArea
-        placeholder="Task description"
+        placeholder="Task description (optional)"
         value={formData.description}
         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
       />
