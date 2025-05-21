@@ -21,20 +21,37 @@ interface ThemeProps {
 
 const ListContainer = styled.div`
   width: 100%;
-  max-width: 600px;
+  max-width: 800px;
   margin: 0 auto;
   touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
   overflow-y: auto;
   height: 100%;
+  min-height: 100vh;
   padding: 16px;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  @media (max-width: 840px) {
+    max-width: 100%;
+    padding: 12px;
+  }
 `;
 
 const ReorderContainer = styled(Reorder.Group)<{ theme?: 'light' | 'dark' }>`
   touch-action: pan-y;
-  min-height: calc(100vh - 200px);
-  padding-bottom: 100px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 24px;
+
+  @media (max-width: 480px) {
+    gap: 8px;
+    padding-bottom: 16px;
+  }
 `;
 
 const EmptyState = styled.div<ThemeProps>`
@@ -42,6 +59,11 @@ const EmptyState = styled.div<ThemeProps>`
   color: ${props => props.theme === 'light' ? '#666' : '#999'};
   padding: 2rem;
   font-size: 1.1rem;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
 `;
 
 const DragHandle = styled.div<ThemeProps>`
@@ -78,16 +100,30 @@ const ReorderItem = styled(Reorder.Item)`
   padding: 0;
   width: 100%;
   touch-action: pan-y;
-  
-  &:not(:last-child) {
-    margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+`;
+
+const CompletedTasksContainer = styled.div<{ theme: 'light' | 'dark' }>`
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid ${props => props.theme === 'light' ? '#eee' : '#333'};
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  @media (max-width: 480px) {
+    gap: 8px;
+    margin-top: 4px;
+    padding-top: 12px;
   }
 `;
 
-const CompletedTasksContainer = styled.div`
-  margin-top: 24px;
-  padding-top: 24px;
-  border-top: 1px solid ${props => props.theme === 'light' ? '#eee' : '#333'};
+const CompletedTasksHeader = styled.div<{ theme: 'light' | 'dark' }>`
+  font-size: 0.9rem;
+  color: ${props => props.theme === 'light' ? '#666' : '#999'};
+  padding: 0 4px;
+  margin-bottom: 4px;
 `;
 
 const TodoItem_Draggable: React.FC<{
@@ -161,9 +197,11 @@ const TodoList: React.FC<TodoListProps> = ({
 
   if (todos.length === 0) {
     return (
-      <EmptyState theme={theme}>
-        No tasks yet. Add one to get started!
-      </EmptyState>
+      <ListContainer>
+        <EmptyState theme={theme}>
+          No tasks yet. Add one to get started!
+        </EmptyState>
+      </ListContainer>
     );
   }
 
@@ -191,7 +229,10 @@ const TodoList: React.FC<TodoListProps> = ({
       </ReorderContainer>
 
       {completedTodos.length > 0 && (
-        <CompletedTasksContainer>
+        <CompletedTasksContainer theme={theme}>
+          <CompletedTasksHeader theme={theme}>
+            Completed Tasks ({completedTodos.length})
+          </CompletedTasksHeader>
           {completedTodos.map((todo) => (
             <TodoItem
               key={todo.id}
