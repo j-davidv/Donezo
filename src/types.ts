@@ -5,6 +5,14 @@ export interface Todo {
   startTime?: string;
   endTime?: string;
   completed: boolean;
+  ownerId: string;
+  sharedWith: string[];
+  collaborators: {
+    id: string;
+    email: string;
+  }[];
+  lastModifiedBy?: string;
+  lastModifiedAt?: number;
 }
 
 export interface TodoFormData {
@@ -12,4 +20,9 @@ export interface TodoFormData {
   description: string;
   startTime?: string;
   endTime?: string;
+}
+
+export interface CollaboratorData {
+  email: string;
+  id: string;
 } 

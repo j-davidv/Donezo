@@ -10,6 +10,8 @@ interface TodoListProps {
   onDelete: (id: string) => void;
   onToggle: (id: string) => void;
   onReorder: (startIndex: number, endIndex: number) => void;
+  onAddCollaborator: (todoId: string, email: string) => Promise<void>;
+  onRemoveCollaborator: (todoId: string, userId: string) => Promise<void>;
 }
 
 const ListContainer = styled.div`
@@ -31,6 +33,8 @@ const TodoList: React.FC<TodoListProps> = ({
   onDelete,
   onToggle,
   onReorder,
+  onAddCollaborator,
+  onRemoveCollaborator,
 }) => {
   if (todos.length === 0) {
     return (
@@ -58,6 +62,8 @@ const TodoList: React.FC<TodoListProps> = ({
               onUpdate={onUpdate}
               onDelete={onDelete}
               onToggle={onToggle}
+              onAddCollaborator={onAddCollaborator}
+              onRemoveCollaborator={onRemoveCollaborator}
             />
           </Reorder.Item>
         ))}

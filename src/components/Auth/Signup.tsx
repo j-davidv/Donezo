@@ -11,6 +11,20 @@ const AuthContainer = styled.div`
   border-radius: 8px;
 `;
 
+const AppTitle = styled.h1`
+  font-size: 2.5rem;
+  color: #61dafb;
+  text-align: center;
+  margin-bottom: 0.5rem;
+`;
+
+const Subtitle = styled.p`
+  color: #999;
+  text-align: center;
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+`;
+
 const Form = styled.form`
   display: flex;
   flex-direction: column;
@@ -100,6 +114,8 @@ const Signup: React.FC = () => {
 
   return (
     <AuthContainer>
+      <AppTitle>Donezo</AppTitle>
+      <Subtitle>Your tasks, your way</Subtitle>
       <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>Sign Up</h2>
       {error && <ErrorMessage>{error}</ErrorMessage>}
       <Form onSubmit={handleSubmit}>
