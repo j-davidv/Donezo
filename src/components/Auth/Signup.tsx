@@ -89,6 +89,7 @@ const Signup: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { signup } = useAuth();
@@ -101,10 +102,14 @@ const Signup: React.FC = () => {
       return setError('Passwords do not match');
     }
 
+    if (!name.trim()) {
+      return setError('Name is required');
+    }
+
     try {
       setError('');
       setLoading(true);
-      await signup(email, password);
+      await signup(email, password, name.trim());
       navigate('/');
     } catch (err) {
       setError('Failed to create an account');
@@ -119,6 +124,13 @@ const Signup: React.FC = () => {
       <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>Sign Up</h2>
       {error && <ErrorMessage>{error}</ErrorMessage>}
       <Form onSubmit={handleSubmit}>
+        <Input
+          type="text"
+          placeholder="Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+        />
         <Input
           type="email"
           placeholder="Email"

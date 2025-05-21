@@ -6,51 +6,110 @@ import TodoList from './components/TodoList';
 import AddTodoForm from './components/AddTodoForm';
 import Login from './components/Auth/Login';
 import Signup from './components/Auth/Signup';
+import Settings from './components/Settings/Settings';
 import { Todo, TodoFormData } from './types';
 import { collection, addDoc, deleteDoc, doc, updateDoc, query, where, onSnapshot, getDocs } from 'firebase/firestore';
 import { db } from './firebase';
 import { auth } from './firebase';
 
-const AppContainer = styled.div`
+interface ThemeProps {
+  theme: 'light' | 'dark';
+}
+
+const AppContainer = styled.div<ThemeProps>`
   min-height: 100vh;
-  background-color: #1a1a1a;
-  color: #ffffff;
+  background-color: ${props => props.theme === 'light' ? '#f5f5f5' : '#1a1a1a'};
+  color: ${props => props.theme === 'light' ? '#333' : '#ffffff'};
   padding: 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative;
 `;
 
-const Title = styled.h1`
-  font-size: 2.5rem;
+const Header = styled.div`
+  width: 100%;
+  max-width: 1200px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 2rem;
-  color: #61dafb;
-  text-align: center;
+  padding: 0 1rem;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    gap: 1rem;
+  }
 `;
 
-const LogoutButton = styled.button`
-  position: absolute;
-  top: 20px;
-  right: 20px;
+const Title = styled.h1<ThemeProps>`
+  font-size: 2.5rem;
+  color: ${props => props.theme === 'light' ? '#2196f3' : '#61dafb'};
+  text-align: center;
+  margin: 0;
+
+  @media (max-width: 480px) {
+    font-size: 2rem;
+  }
+`;
+
+const HeaderButtons = styled.div`
+  display: flex;
+  gap: 10px;
+
+  @media (max-width: 480px) {
+    width: 100%;
+    justify-content: center;
+  }
+`;
+
+const Button = styled.button<ThemeProps>`
   padding: 8px 16px;
-  background-color: #ff4444;
-  color: white;
+  background-color: ${props => props.theme === 'light' ? '#2196f3' : '#61dafb'};
+  color: ${props => props.theme === 'light' ? '#fff' : '#1a1a1a'};
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  font-size: 0.9rem;
+  min-width: 100px;
 
+  &:hover {
+    background-color: ${props => props.theme === 'light' ? '#1976d2' : '#4fa8d1'};
+  }
+
+  @media (max-width: 480px) {
+    flex: 1;
+    max-width: 150px;
+  }
+`;
+
+const LogoutButton = styled(Button)`
+  background-color: #ff4444;
   &:hover {
     background-color: #ff6666;
   }
 `;
 
-const LoadingContainer = styled.div`
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`;
+
+const LoadingContainer = styled.div<ThemeProps>`
   min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #1a1a1a;
-  color: #61dafb;
+  background-color: ${props => props.theme === 'light' ? '#f5f5f5' : '#1a1a1a'};
+  color: ${props => props.theme === 'light' ? '#2196f3' : '#61dafb'};
   font-size: 1.5rem;
 `;
 
@@ -64,8 +123,9 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
 };
 
 const TodoApp: React.FC = () => {
-  const { currentUser, logout } = useAuth();
+  const { currentUser, logout, userSettings } = useAuth();
   const [todos, setTodos] = React.useState<Todo[]>([]);
+  const [showSettings, setShowSettings] = React.useState(false);
 
   React.useEffect(() => {
     if (!currentUser) return;
@@ -279,6 +339,34 @@ const TodoApp: React.FC = () => {
     }
   };
 
+  const addComment = async (todoId: string, text: string) => {
+    try {
+      if (!currentUser) return;
+
+      const todoRef = doc(db, 'todos', todoId);
+      const todo = todos.find(t => t.id === todoId);
+
+      if (!todo) return;
+
+      const newComment = {
+        id: crypto.randomUUID(),
+        text,
+        userId: currentUser.uid,
+        userEmail: currentUser.email || 'Unknown',
+        createdAt: Date.now()
+      };
+
+      await updateDoc(todoRef, {
+        comments: [...(todo.comments || []), newComment],
+        lastModifiedBy: currentUser.uid,
+        lastModifiedAt: Date.now()
+      });
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      throw error;
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -288,9 +376,21 @@ const TodoApp: React.FC = () => {
   };
 
   return (
-    <AppContainer>
-      <LogoutButton onClick={handleLogout}>Logout</LogoutButton>
-      <Title>Donezo</Title>
+    <AppContainer theme={userSettings?.theme || 'dark'}>
+      <Header>
+        <Title theme={userSettings?.theme || 'dark'}>Donezo</Title>
+        <HeaderButtons>
+          <Button
+            theme={userSettings?.theme || 'dark'}
+            onClick={() => setShowSettings(true)}
+          >
+            Settings
+          </Button>
+          <LogoutButton theme={userSettings?.theme || 'dark'} onClick={handleLogout}>
+            Logout
+          </LogoutButton>
+        </HeaderButtons>
+      </Header>
       <AddTodoForm onAdd={addTodo} />
       <TodoList
         todos={todos}
@@ -299,7 +399,16 @@ const TodoApp: React.FC = () => {
         onReorder={reorderTodos}
         onAddCollaborator={addCollaborator}
         onRemoveCollaborator={removeCollaborator}
+        onAddComment={addComment}
+        theme={userSettings?.theme || 'dark'}
       />
+      {showSettings && (
+        <ModalOverlay onClick={() => setShowSettings(false)}>
+          <div onClick={e => e.stopPropagation()}>
+            <Settings onClose={() => setShowSettings(false)} />
+          </div>
+        </ModalOverlay>
+      )}
     </AppContainer>
   );
 };
@@ -318,15 +427,15 @@ const App: React.FC = () => {
 
   if (authLoading) {
     return (
-      <LoadingContainer>
+      <LoadingContainer theme="dark">
         Initializing...
       </LoadingContainer>
     );
   }
 
   return (
-    <Router>
-      <AuthProvider>
+    <AuthProvider>
+      <Router>
         <Routes>
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<Login />} />
@@ -339,8 +448,8 @@ const App: React.FC = () => {
             }
           />
         </Routes>
-      </AuthProvider>
-    </Router>
+      </Router>
+    </AuthProvider>
   );
 };
 

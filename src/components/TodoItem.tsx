@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Todo } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import CollaboratorModal from './CollaboratorModal';
+import CommentSection from './CommentSection';
 
 interface TodoItemProps {
   todo: Todo;
@@ -11,10 +12,16 @@ interface TodoItemProps {
   onToggle: (id: string) => void;
   onAddCollaborator: (todoId: string, email: string) => Promise<void>;
   onRemoveCollaborator: (todoId: string, userId: string) => Promise<void>;
+  onAddComment: (todoId: string, text: string) => Promise<void>;
+  theme: 'light' | 'dark';
 }
 
-const ItemContainer = styled(motion.div)`
-  background-color: #2a2a2a;
+interface ThemeProps {
+  theme: 'light' | 'dark';
+}
+
+const ItemContainer = styled(motion.div)<ThemeProps>`
+  background-color: ${props => props.theme === 'light' ? '#fff' : '#2a2a2a'};
   border-radius: 8px;
   padding: 16px;
   margin: 8px 0;
@@ -25,9 +32,10 @@ const ItemContainer = styled(motion.div)`
   cursor: pointer;
   user-select: none;
   position: relative;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   
   &:hover {
-    background-color: #333;
+    background-color: ${props => props.theme === 'light' ? '#f5f5f5' : '#333'};
   }
 
   @media (max-width: 480px) {
@@ -42,11 +50,16 @@ const Checkbox = styled.input`
   cursor: pointer;
 `;
 
-const Content = styled.div<{ completed: boolean }>`
+const Content = styled.div<{ completed: boolean; theme: 'light' | 'dark' }>`
   flex: 1;
   min-width: 0;
   text-decoration: ${props => props.completed ? 'line-through' : 'none'};
-  color: ${props => props.completed ? '#666' : '#fff'};
+  color: ${props => {
+    if (props.completed) {
+      return props.theme === 'light' ? '#999' : '#666';
+    }
+    return props.theme === 'light' ? '#333' : '#fff';
+  }};
 `;
 
 const Title = styled.h3`
@@ -57,15 +70,15 @@ const Title = styled.h3`
   gap: 8px;
 `;
 
-const Description = styled.p`
+const Description = styled.p<ThemeProps>`
   margin: 0 0 8px 0;
-  color: #999;
+  color: ${props => props.theme === 'light' ? '#666' : '#999'};
   font-size: 0.9rem;
 `;
 
-const TimeInfo = styled.div`
+const TimeInfo = styled.div<ThemeProps>`
   font-size: 0.8rem;
-  color: #666;
+  color: ${props => props.theme === 'light' ? '#999' : '#666'};
   margin-bottom: 8px;
 `;
 
@@ -84,18 +97,17 @@ const ButtonGroup = styled.div`
   }
 `;
 
-const Button = styled.button<{ variant?: 'danger' | 'secondary' }>`
+const Button = styled.button<{ variant?: 'danger' | 'secondary'; theme: 'light' | 'dark' }>`
   background-color: ${props => {
-    switch (props.variant) {
-      case 'danger':
-        return '#ff4444';
-      case 'secondary':
-        return '#4a4a4a';
-      default:
-        return '#61dafb';
-    }
+    if (props.variant === 'danger') return '#ff4444';
+    if (props.variant === 'secondary') return props.theme === 'light' ? '#e0e0e0' : '#4a4a4a';
+    return props.theme === 'light' ? '#2196f3' : '#61dafb';
   }};
-  color: white;
+  color: ${props => {
+    if (props.variant === 'danger') return 'white';
+    if (props.variant === 'secondary') return props.theme === 'light' ? '#333' : 'white';
+    return props.theme === 'light' ? 'white' : '#1a1a1a';
+  }};
   border: none;
   border-radius: 4px;
   padding: 8px 12px;
@@ -114,40 +126,35 @@ const Button = styled.button<{ variant?: 'danger' | 'secondary' }>`
   
   &:hover {
     background-color: ${props => {
-      switch (props.variant) {
-        case 'danger':
-          return '#ff6666';
-        case 'secondary':
-          return '#5a5a5a';
-        default:
-          return '#4fa8d1';
-      }
+      if (props.variant === 'danger') return '#ff6666';
+      if (props.variant === 'secondary') return props.theme === 'light' ? '#d0d0d0' : '#5a5a5a';
+      return props.theme === 'light' ? '#1976d2' : '#4fa8d1';
     }};
   }
 `;
 
-const CollaboratorCount = styled.div`
+const CollaboratorCount = styled.div<ThemeProps>`
   font-size: 0.8rem;
-  color: #61dafb;
+  color: ${props => props.theme === 'light' ? '#2196f3' : '#61dafb'};
   display: flex;
   align-items: center;
   gap: 4px;
   padding: 4px 8px;
-  background-color: rgba(97, 218, 251, 0.1);
+  background-color: ${props => props.theme === 'light' ? 'rgba(33, 150, 243, 0.1)' : 'rgba(97, 218, 251, 0.1)'};
   border-radius: 4px;
   margin-left: 8px;
 `;
 
-const CollaboratorIcon = styled.span`
-  color: #61dafb;
+const CollaboratorIcon = styled.span<ThemeProps>`
+  color: ${props => props.theme === 'light' ? '#2196f3' : '#61dafb'};
   font-size: 1rem;
 `;
 
-const CollaboratorInfo = styled.div`
+const CollaboratorInfo = styled.div<ThemeProps>`
   margin-top: 8px;
   font-size: 0.8rem;
-  color: #999;
-  background-color: rgba(255, 255, 255, 0.05);
+  color: ${props => props.theme === 'light' ? '#666' : '#999'};
+  background-color: ${props => props.theme === 'light' ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.05)'};
   padding: 8px;
   border-radius: 4px;
   display: flex;
@@ -166,10 +173,14 @@ const TodoItem: React.FC<TodoItemProps> = ({
   onToggle,
   onAddCollaborator,
   onRemoveCollaborator,
+  onAddComment,
+  theme,
 }) => {
   const [showCollaborators, setShowCollaborators] = useState(false);
-  const { currentUser } = useAuth();
+  const [showComments, setShowComments] = useState(false);
+  const { currentUser, userSettings } = useAuth();
   const isOwner = currentUser?.uid === todo.ownerId;
+  const isCollaborator = todo.collaborators.some(c => c.id === currentUser?.uid);
   
   console.log('TodoItem:', {
     todoId: todo.id,
@@ -187,9 +198,14 @@ const TodoItem: React.FC<TodoItemProps> = ({
     await onRemoveCollaborator(todo.id, userId);
   };
 
+  const handleAddComment = async (text: string) => {
+    await onAddComment(todo.id, text);
+  };
+
   return (
     <>
       <ItemContainer
+        theme={theme}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
@@ -201,35 +217,53 @@ const TodoItem: React.FC<TodoItemProps> = ({
           checked={todo.completed}
           onChange={() => onToggle(todo.id)}
         />
-        <Content completed={todo.completed}>
+        <Content completed={todo.completed} theme={theme}>
           <Title>
             {todo.title}
             {todo.collaborators.length > 0 && (
-              <CollaboratorCount>
-                <CollaboratorIcon>👥</CollaboratorIcon>
+              <CollaboratorCount theme={theme}>
+                <CollaboratorIcon theme={theme}>👥</CollaboratorIcon>
                 {todo.collaborators.length}
               </CollaboratorCount>
             )}
           </Title>
           {todo.description && (
-            <Description>{todo.description}</Description>
+            <Description theme={theme}>{todo.description}</Description>
           )}
           {todo.startTime && todo.endTime && (
-            <TimeInfo>
+            <TimeInfo theme={theme}>
               {todo.startTime} - {todo.endTime}
             </TimeInfo>
           )}
           {todo.collaborators.length > 0 && (
-            <CollaboratorInfo>
-              <CollaboratorIcon>👥</CollaboratorIcon>
+            <CollaboratorInfo theme={theme}>
+              <CollaboratorIcon theme={theme}>👥</CollaboratorIcon>
               Shared with: {todo.collaborators.map(c => c.email).join(', ')}
             </CollaboratorInfo>
+          )}
+          {(isOwner || isCollaborator) && (
+            <Button
+              variant="secondary"
+              theme={theme}
+              onClick={() => setShowComments(!showComments)}
+              style={{ marginTop: '8px' }}
+            >
+              💬 {todo.comments?.length || 0} Comments
+            </Button>
+          )}
+          {showComments && (isOwner || isCollaborator) && (
+            <CommentSection
+              comments={todo.comments || []}
+              onAddComment={handleAddComment}
+              theme={theme}
+            />
           )}
         </Content>
         <ButtonGroup>
           {isOwner && (
             <Button
               variant="secondary"
+              theme={theme}
               onClick={() => setShowCollaborators(true)}
             >
               <ShareIcon>🔗</ShareIcon>
@@ -238,6 +272,7 @@ const TodoItem: React.FC<TodoItemProps> = ({
           )}
           <Button
             variant="danger"
+            theme={theme}
             onClick={() => onDelete(todo.id)}
           >
             Delete
@@ -251,6 +286,7 @@ const TodoItem: React.FC<TodoItemProps> = ({
           onClose={() => setShowCollaborators(false)}
           onAddCollaborator={handleAddCollaborator}
           onRemoveCollaborator={handleRemoveCollaborator}
+          theme={theme}
         />
       )}
     </>

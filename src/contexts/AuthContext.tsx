@@ -4,9 +4,10 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  User
+  User,
+  updateProfile
 } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 import styled from '@emotion/styled';
 
@@ -20,11 +21,19 @@ const LoadingContainer = styled.div`
   font-size: 1.5rem;
 `;
 
+interface UserSettings {
+  name: string;
+  theme: 'light' | 'dark';
+}
+
 interface AuthContextType {
   currentUser: User | null;
-  signup: (email: string, password: string) => Promise<void>;
+  userSettings: UserSettings | null;
+  signup: (email: string, password: string, name: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  updateUserName: (name: string) => Promise<void>;
+  updateUserTheme: (theme: 'light' | 'dark') => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -39,42 +48,89 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const loadUserSettings = async (user: User) => {
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    if (userDoc.exists()) {
+      const data = userDoc.data();
+      setUserSettings({
+        name: data.name || user.email?.split('@')[0] || 'User',
+        theme: data.theme || 'dark'
+      });
+    }
+  };
+
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
+      if (user) {
+        await loadUserSettings(user);
+      } else {
+        setUserSettings(null);
+      }
       setLoading(false);
     });
 
     return unsubscribe;
   }, []);
 
-  const signup = async (email: string, password: string) => {
+  const signup = async (email: string, password: string, name: string) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
+    
+    await updateProfile(user, { displayName: name });
     
     // Create a user document in Firestore
     await setDoc(doc(db, 'users', user.uid), {
       email: user.email,
+      name: name,
+      theme: 'dark',
       createdAt: Date.now(),
-      todos: [] // Array of todo IDs that the user owns or collaborates on
+      todos: []
+    });
+
+    setUserSettings({
+      name,
+      theme: 'dark'
     });
   };
 
   const login = async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth, email, password);
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    await loadUserSettings(userCredential.user);
   };
 
   const logout = async () => {
     await signOut(auth);
+    setUserSettings(null);
+  };
+
+  const updateUserName = async (name: string) => {
+    if (!currentUser) return;
+    
+    await updateProfile(currentUser, { displayName: name });
+    await updateDoc(doc(db, 'users', currentUser.uid), { name });
+    
+    setUserSettings(prev => prev ? { ...prev, name } : { name, theme: 'dark' });
+  };
+
+  const updateUserTheme = async (theme: 'light' | 'dark') => {
+    if (!currentUser) return;
+    
+    await updateDoc(doc(db, 'users', currentUser.uid), { theme });
+    setUserSettings(prev => prev ? { ...prev, theme } : { name: 'User', theme });
   };
 
   const value = {
     currentUser,
+    userSettings,
     signup,
     login,
-    logout
+    logout,
+    updateUserName,
+    updateUserTheme
   };
 
   return (

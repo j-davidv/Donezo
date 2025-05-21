@@ -11,6 +11,12 @@ interface TodoListProps {
   onReorder: (startIndex: number, endIndex: number) => void;
   onAddCollaborator: (todoId: string, email: string) => Promise<void>;
   onRemoveCollaborator: (todoId: string, userId: string) => Promise<void>;
+  onAddComment: (todoId: string, text: string) => Promise<void>;
+  theme: 'light' | 'dark';
+}
+
+interface ThemeProps {
+  theme: 'light' | 'dark';
 }
 
 const ListContainer = styled.div`
@@ -19,9 +25,9 @@ const ListContainer = styled.div`
   margin: 0 auto;
 `;
 
-const EmptyState = styled.div`
+const EmptyState = styled.div<ThemeProps>`
   text-align: center;
-  color: #666;
+  color: ${props => props.theme === 'light' ? '#666' : '#999'};
   padding: 2rem;
   font-size: 1.1rem;
 `;
@@ -33,6 +39,8 @@ const TodoList: React.FC<TodoListProps> = ({
   onReorder,
   onAddCollaborator,
   onRemoveCollaborator,
+  onAddComment,
+  theme,
 }) => {
   // Keep track of incomplete todos in local state
   const [localIncompleteTodos, setLocalIncompleteTodos] = React.useState(todos.filter(todo => !todo.completed));
@@ -45,7 +53,7 @@ const TodoList: React.FC<TodoListProps> = ({
 
   if (todos.length === 0) {
     return (
-      <EmptyState>
+      <EmptyState theme={theme}>
         No tasks yet. Add one to get started!
       </EmptyState>
     );
@@ -82,6 +90,8 @@ const TodoList: React.FC<TodoListProps> = ({
               onToggle={onToggle}
               onAddCollaborator={onAddCollaborator}
               onRemoveCollaborator={onRemoveCollaborator}
+              onAddComment={onAddComment}
+              theme={theme}
             />
           </Reorder.Item>
         ))}
@@ -96,6 +106,8 @@ const TodoList: React.FC<TodoListProps> = ({
           onToggle={onToggle}
           onAddCollaborator={onAddCollaborator}
           onRemoveCollaborator={onRemoveCollaborator}
+          onAddComment={onAddComment}
+          theme={theme}
         />
       ))}
     </ListContainer>

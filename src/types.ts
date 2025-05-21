@@ -1,3 +1,11 @@
+export interface Comment {
+  id: string;
+  text: string;
+  userId: string;
+  userEmail: string;
+  createdAt: number;
+}
+
 export interface Todo {
   id: string;
   title: string;
@@ -14,6 +22,7 @@ export interface Todo {
   lastModifiedBy?: string;
   lastModifiedAt?: number;
   order: number;
+  comments: Comment[];
 }
 
 export interface TodoFormData {
