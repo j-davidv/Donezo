@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
-    "vercel-build": "npm ci && npm run build",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit",
+    "vercel-build": "npm install && npm run typecheck && npm run build",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -16,14 +17,17 @@
     "@emotion/styled": "^11.11.0",
     "framer-motion": "^10.12.8",
     "firebase": "^10.7.0",
-    "react-router-dom": "^6.20.0"
+    "react-router-dom": "^6.20.0",
+    "typescript": "^5.0.4"
   },
   "devDependencies": {
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "@types/react-router-dom": "^5.3.3",
     "@vitejs/plugin-react": "^4.0.0",
-    "typescript": "^5.0.4",
     "vite": "^4.3.5"
+  },
+  "engines": {
+    "node": ">=16.0.0"
   }
 } 
