@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import styled from '@emotion/styled';
-import { Todo } from '../types';
 
 interface CollaboratorModalProps {
-  todo: Todo;
   onClose: () => void;
-  onAddCollaborator: (email: string) => Promise<void>;
-  onRemoveCollaborator: (userId: string) => Promise<void>;
+  onAdd: (email: string) => Promise<void>;
+  onRemove: (userId: string) => Promise<void>;
+  collaborators: Array<{ id: string; email: string }>;
   theme: 'light' | 'dark';
 }
 
@@ -110,10 +109,10 @@ const ErrorMessage = styled.div<ThemeProps>`
 `;
 
 const CollaboratorModal: React.FC<CollaboratorModalProps> = ({
-  todo,
   onClose,
-  onAddCollaborator,
-  onRemoveCollaborator,
+  onAdd,
+  onRemove,
+  collaborators,
   theme,
 }) => {
   const [email, setEmail] = useState('');
@@ -127,7 +126,7 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({
     try {
       setLoading(true);
       setError('');
-      await onAddCollaborator(email);
+      await onAdd(email);
       setEmail('');
     } catch (err) {
       setError('Failed to add collaborator. Please check the email and try again.');
@@ -155,12 +154,12 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({
         {error && <ErrorMessage theme={theme}>{error}</ErrorMessage>}
         
         <CollaboratorList>
-          {todo.collaborators.map(collaborator => (
+          {collaborators.map(collaborator => (
             <CollaboratorItem key={collaborator.id} theme={theme}>
               <span>{collaborator.email}</span>
               <Button
                 variant="danger"
-                onClick={() => onRemoveCollaborator(collaborator.id)}
+                onClick={() => onRemove(collaborator.id)}
                 theme={theme}
               >
                 Remove

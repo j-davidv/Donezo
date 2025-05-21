@@ -14,6 +14,7 @@ interface TodoItemProps {
   onRemoveCollaborator: (todoId: string, userId: string) => Promise<void>;
   onAddComment: (todoId: string, text: string) => Promise<void>;
   theme: 'light' | 'dark';
+  dragHandle?: React.ReactNode;
 }
 
 interface ThemeProps {
@@ -29,10 +30,10 @@ const ItemContainer = styled(motion.div)<ThemeProps>`
   flex-wrap: wrap;
   align-items: flex-start;
   gap: 12px;
-  cursor: pointer;
   user-select: none;
   position: relative;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  touch-action: pan-y;
   
   &:hover {
     background-color: ${props => props.theme === 'light' ? '#f5f5f5' : '#333'};
@@ -40,7 +41,16 @@ const ItemContainer = styled(motion.div)<ThemeProps>`
 
   @media (max-width: 480px) {
     flex-direction: column;
+    padding: 12px;
   }
+`;
+
+const MainContent = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
 `;
 
 const Checkbox = styled.input`
@@ -175,10 +185,11 @@ const TodoItem: React.FC<TodoItemProps> = ({
   onRemoveCollaborator,
   onAddComment,
   theme,
+  dragHandle
 }) => {
   const [showCollaborators, setShowCollaborators] = useState(false);
   const [showComments, setShowComments] = useState(false);
-  const { currentUser, userSettings } = useAuth();
+  const { currentUser } = useAuth();
   const isOwner = currentUser?.uid === todo.ownerId;
   const isCollaborator = todo.collaborators.some(c => c.id === currentUser?.uid);
   
@@ -203,15 +214,9 @@ const TodoItem: React.FC<TodoItemProps> = ({
   };
 
   return (
-    <>
-      <ItemContainer
-        theme={theme}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-      >
+    <ItemContainer theme={theme}>
+      <MainContent>
+        {!todo.completed && dragHandle}
         <Checkbox
           type="checkbox"
           checked={todo.completed}
@@ -230,9 +235,11 @@ const TodoItem: React.FC<TodoItemProps> = ({
           {todo.description && (
             <Description theme={theme}>{todo.description}</Description>
           )}
-          {todo.startTime && todo.endTime && (
+          {(todo.startTime || todo.endTime) && (
             <TimeInfo theme={theme}>
-              {todo.startTime} - {todo.endTime}
+              {todo.startTime && `Start: ${todo.startTime}`}
+              {todo.startTime && todo.endTime && ' - '}
+              {todo.endTime && `End: ${todo.endTime}`}
             </TimeInfo>
           )}
           {todo.collaborators.length > 0 && (
@@ -241,55 +248,59 @@ const TodoItem: React.FC<TodoItemProps> = ({
               Shared with: {todo.collaborators.map(c => c.email).join(', ')}
             </CollaboratorInfo>
           )}
-          {(isOwner || isCollaborator) && (
-            <Button
-              variant="secondary"
-              theme={theme}
-              onClick={() => setShowComments(!showComments)}
-              style={{ marginTop: '8px' }}
-            >
-              💬 {todo.comments?.length || 0} Comments
-            </Button>
-          )}
-          {showComments && (isOwner || isCollaborator) && (
-            <CommentSection
-              comments={todo.comments || []}
-              onAddComment={handleAddComment}
-              theme={theme}
-            />
-          )}
         </Content>
-        <ButtonGroup>
-          {isOwner && (
+      </MainContent>
+
+      <ButtonGroup>
+        {(isOwner || isCollaborator) && (
+          <>
             <Button
+              onClick={() => setShowComments(!showComments)}
               variant="secondary"
               theme={theme}
-              onClick={() => setShowCollaborators(true)}
             >
-              <ShareIcon>🔗</ShareIcon>
-              Share
+              💬 {todo.comments?.length || 0}
             </Button>
-          )}
-          <Button
-            variant="danger"
-            theme={theme}
-            onClick={() => onDelete(todo.id)}
-          >
-            Delete
-          </Button>
-        </ButtonGroup>
-      </ItemContainer>
-      
+            {isOwner && (
+              <Button
+                onClick={() => setShowCollaborators(true)}
+                variant="secondary"
+                theme={theme}
+              >
+                <ShareIcon>👥</ShareIcon>
+                Share
+              </Button>
+            )}
+          </>
+        )}
+        <Button
+          onClick={() => onDelete(todo.id)}
+          variant="danger"
+          theme={theme}
+        >
+          Delete
+        </Button>
+      </ButtonGroup>
+
       {showCollaborators && (
         <CollaboratorModal
-          todo={todo}
           onClose={() => setShowCollaborators(false)}
-          onAddCollaborator={handleAddCollaborator}
-          onRemoveCollaborator={handleRemoveCollaborator}
+          onAdd={handleAddCollaborator}
+          onRemove={handleRemoveCollaborator}
+          collaborators={todo.collaborators}
           theme={theme}
         />
       )}
-    </>
+
+      {showComments && (
+        <CommentSection
+          todoId={todo.id}
+          comments={todo.comments || []}
+          onAddComment={onAddComment}
+          theme={theme}
+        />
+      )}
+    </ItemContainer>
   );
 };
 

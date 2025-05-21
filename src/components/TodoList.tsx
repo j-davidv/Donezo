@@ -23,6 +23,8 @@ const ListContainer = styled.div`
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
 `;
 
 const EmptyState = styled.div<ThemeProps>`
@@ -30,6 +32,28 @@ const EmptyState = styled.div<ThemeProps>`
   color: ${props => props.theme === 'light' ? '#666' : '#999'};
   padding: 2rem;
   font-size: 1.1rem;
+`;
+
+const DragHandle = styled.div<ThemeProps>`
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  color: ${props => props.theme === 'light' ? '#999' : '#666'};
+  margin-right: 8px;
+  touch-action: none;
+
+  &:before {
+    content: "⋮⋮";
+    font-size: 16px;
+    letter-spacing: -2px;
+  }
+
+  @media (max-width: 480px) {
+    margin-right: 4px;
+  }
 `;
 
 const TodoList: React.FC<TodoListProps> = ({
@@ -83,7 +107,12 @@ const TodoList: React.FC<TodoListProps> = ({
         }}
       >
         {localIncompleteTodos.map((todo) => (
-          <Reorder.Item key={todo.id} value={todo} drag>
+          <Reorder.Item 
+            key={todo.id} 
+            value={todo} 
+            dragListener={false}
+            dragControls={todo.completed ? undefined : undefined}
+          >
             <TodoItem
               todo={todo}
               onDelete={onDelete}
@@ -92,6 +121,7 @@ const TodoList: React.FC<TodoListProps> = ({
               onRemoveCollaborator={onRemoveCollaborator}
               onAddComment={onAddComment}
               theme={theme}
+              dragHandle={<DragHandle theme={theme} />}
             />
           </Reorder.Item>
         ))}

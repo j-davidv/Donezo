@@ -5,8 +5,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { motion } from 'framer-motion';
 
 interface CommentSectionProps {
+  todoId: string;
   comments: Comment[];
-  onAddComment: (text: string) => Promise<void>;
+  onAddComment: (todoId: string, text: string) => Promise<void>;
   theme: 'light' | 'dark';
 }
 
@@ -98,6 +99,7 @@ const NoComments = styled.div<ThemeProps>`
 `;
 
 const CommentSection: React.FC<CommentSectionProps> = ({
+  todoId,
   comments,
   onAddComment,
   theme,
@@ -112,7 +114,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
 
     try {
       setIsSubmitting(true);
-      await onAddComment(newComment.trim());
+      await onAddComment(todoId, newComment.trim());
       setNewComment('');
     } catch (error) {
       console.error('Error adding comment:', error);
