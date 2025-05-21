@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from '@emotion/styled';
-import { Reorder } from 'framer-motion';
+import { Reorder, useDragControls } from 'framer-motion';
 import { Todo } from '../types';
 import TodoItem from './TodoItem';
 
@@ -25,6 +25,16 @@ const ListContainer = styled.div`
   margin: 0 auto;
   touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
+  overflow-y: auto;
+  height: 100%;
+  padding: 16px;
+  box-sizing: border-box;
+`;
+
+const ReorderContainer = styled(Reorder.Group)<{ theme?: 'light' | 'dark' }>`
+  touch-action: pan-y;
+  min-height: calc(100vh - 200px);
+  padding-bottom: 100px;
 `;
 
 const EmptyState = styled.div<ThemeProps>`
@@ -44,6 +54,8 @@ const DragHandle = styled.div<ThemeProps>`
   color: ${props => props.theme === 'light' ? '#999' : '#666'};
   margin-right: 8px;
   touch-action: none;
+  user-select: none;
+  flex-shrink: 0;
 
   &:before {
     content: "⋮⋮";
@@ -54,7 +66,68 @@ const DragHandle = styled.div<ThemeProps>`
   @media (max-width: 480px) {
     margin-right: 4px;
   }
+
+  &:active {
+    cursor: grabbing;
+  }
 `;
+
+const ReorderItem = styled(Reorder.Item)`
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  touch-action: pan-y;
+  
+  &:not(:last-child) {
+    margin-bottom: 8px;
+  }
+`;
+
+const CompletedTasksContainer = styled.div`
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid ${props => props.theme === 'light' ? '#eee' : '#333'};
+`;
+
+const TodoItem_Draggable: React.FC<{
+  todo: Todo;
+  onDelete: (id: string) => void;
+  onToggle: (id: string) => void;
+  onAddCollaborator: (todoId: string, email: string) => Promise<void>;
+  onRemoveCollaborator: (todoId: string, userId: string) => Promise<void>;
+  onAddComment: (todoId: string, text: string) => Promise<void>;
+  theme: 'light' | 'dark';
+}> = ({ todo, onDelete, onToggle, onAddCollaborator, onRemoveCollaborator, onAddComment, theme }) => {
+  const controls = useDragControls();
+  
+  return (
+    <ReorderItem
+      value={todo}
+      dragListener={false}
+      dragControls={controls}
+    >
+      <TodoItem
+        todo={todo}
+        onDelete={onDelete}
+        onToggle={onToggle}
+        onAddCollaborator={onAddCollaborator}
+        onRemoveCollaborator={onRemoveCollaborator}
+        onAddComment={onAddComment}
+        theme={theme}
+        dragHandle={
+          <DragHandle 
+            theme={theme}
+            onPointerDown={(e: React.PointerEvent) => {
+              e.preventDefault();
+              controls.start(e);
+            }}
+          />
+        }
+      />
+    </ReorderItem>
+  );
+};
 
 const TodoList: React.FC<TodoListProps> = ({
   todos,
@@ -66,14 +139,25 @@ const TodoList: React.FC<TodoListProps> = ({
   onAddComment,
   theme,
 }) => {
-  // Keep track of incomplete todos in local state
-  const [localIncompleteTodos, setLocalIncompleteTodos] = React.useState(todos.filter(todo => !todo.completed));
+  const incompleteTodos = todos.filter(todo => !todo.completed);
   const completedTodos = todos.filter(todo => todo.completed);
 
-  // Update local state when todos prop changes
-  React.useEffect(() => {
-    setLocalIncompleteTodos(todos.filter(todo => !todo.completed));
-  }, [todos]);
+  const handleReorder = (reorderedItems: Todo[]) => {
+    // Find which item moved by comparing IDs
+    for (let i = 0; i < reorderedItems.length; i++) {
+      if (reorderedItems[i].id !== incompleteTodos[i]?.id) {
+        // Found the moved item
+        const movedItemId = reorderedItems[i].id;
+        const oldIndex = incompleteTodos.findIndex(t => t.id === movedItemId);
+        const newIndex = i;
+        
+        if (oldIndex !== newIndex) {
+          onReorder(oldIndex, newIndex);
+          return;
+        }
+      }
+    }
+  };
 
   if (todos.length === 0) {
     return (
@@ -85,35 +169,32 @@ const TodoList: React.FC<TodoListProps> = ({
 
   return (
     <ListContainer>
-      <Reorder.Group
+      <ReorderContainer
         axis="y"
-        values={localIncompleteTodos}
-        onReorder={(values) => {
-          // Update local state immediately
-          setLocalIncompleteTodos(values);
-          
-          // Find the moved item
-          const movedItemId = values.find((item, index) => 
-            item.id !== localIncompleteTodos[index]?.id
-          )?.id;
-
-          if (movedItemId) {
-            const oldIndex = localIncompleteTodos.findIndex(t => t.id === movedItemId);
-            const newIndex = values.findIndex(t => t.id === movedItemId);
-            if (oldIndex !== newIndex) {
-              onReorder(oldIndex, newIndex);
-            }
-          }
-        }}
+        values={incompleteTodos}
+        onReorder={(newOrder: unknown[]) => handleReorder(newOrder as Todo[])}
+        as="div"
+        theme={theme}
       >
-        {localIncompleteTodos.map((todo) => (
-          <Reorder.Item 
-            key={todo.id} 
-            value={todo} 
-            dragListener={false}
-            dragControls={todo.completed ? undefined : undefined}
-          >
+        {incompleteTodos.map((todo) => (
+          <TodoItem_Draggable
+            key={todo.id}
+            todo={todo}
+            onDelete={onDelete}
+            onToggle={onToggle}
+            onAddCollaborator={onAddCollaborator}
+            onRemoveCollaborator={onRemoveCollaborator}
+            onAddComment={onAddComment}
+            theme={theme}
+          />
+        ))}
+      </ReorderContainer>
+
+      {completedTodos.length > 0 && (
+        <CompletedTasksContainer>
+          {completedTodos.map((todo) => (
             <TodoItem
+              key={todo.id}
               todo={todo}
               onDelete={onDelete}
               onToggle={onToggle}
@@ -121,25 +202,10 @@ const TodoList: React.FC<TodoListProps> = ({
               onRemoveCollaborator={onRemoveCollaborator}
               onAddComment={onAddComment}
               theme={theme}
-              dragHandle={<DragHandle theme={theme} />}
             />
-          </Reorder.Item>
-        ))}
-      </Reorder.Group>
-
-      {/* Render completed todos without reordering */}
-      {completedTodos.map((todo) => (
-        <TodoItem
-          key={todo.id}
-          todo={todo}
-          onDelete={onDelete}
-          onToggle={onToggle}
-          onAddCollaborator={onAddCollaborator}
-          onRemoveCollaborator={onRemoveCollaborator}
-          onAddComment={onAddComment}
-          theme={theme}
-        />
-      ))}
+          ))}
+        </CompletedTasksContainer>
+      )}
     </ListContainer>
   );
 };

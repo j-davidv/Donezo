@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, ChangeEvent, FormEvent } from 'react';
 import styled from '@emotion/styled';
 import { Comment } from '../types';
 import { useAuth } from '../contexts/AuthContext';
@@ -18,7 +18,7 @@ interface ThemeProps {
 const Container = styled.div<ThemeProps>`
   margin-top: 16px;
   padding-top: 16px;
-  border-top: 1px solid ${props => props.theme === 'light' ? '#ddd' : '#444'};
+  border-top: 1px solid ${(props: ThemeProps) => props.theme === 'light' ? '#ddd' : '#444'};
 `;
 
 const CommentList = styled.div`
@@ -26,7 +26,7 @@ const CommentList = styled.div`
 `;
 
 const CommentItem = styled.div<ThemeProps>`
-  background-color: ${props => props.theme === 'light' ? '#f5f5f5' : '#333'};
+  background-color: ${(props: ThemeProps) => props.theme === 'light' ? '#f5f5f5' : '#333'};
   padding: 12px;
   border-radius: 6px;
   margin-bottom: 8px;
@@ -41,11 +41,11 @@ const CommentHeader = styled.div<ThemeProps>`
   justify-content: space-between;
   margin-bottom: 4px;
   font-size: 0.8rem;
-  color: ${props => props.theme === 'light' ? '#666' : '#999'};
+  color: ${(props: ThemeProps) => props.theme === 'light' ? '#666' : '#999'};
 `;
 
 const CommentText = styled.div<ThemeProps>`
-  color: ${props => props.theme === 'light' ? '#333' : '#fff'};
+  color: ${(props: ThemeProps) => props.theme === 'light' ? '#333' : '#fff'};
   font-size: 0.9rem;
   word-break: break-word;
 `;
@@ -57,22 +57,22 @@ const CommentForm = styled.form`
 
 const CommentInput = styled.input<ThemeProps>`
   flex: 1;
-  background-color: ${props => props.theme === 'light' ? '#fff' : '#333'};
-  border: 1px solid ${props => props.theme === 'light' ? '#ddd' : '#444'};
+  background-color: ${(props: ThemeProps) => props.theme === 'light' ? '#fff' : '#333'};
+  border: 1px solid ${(props: ThemeProps) => props.theme === 'light' ? '#ddd' : '#444'};
   border-radius: 4px;
   padding: 8px 12px;
-  color: ${props => props.theme === 'light' ? '#333' : 'white'};
+  color: ${(props: ThemeProps) => props.theme === 'light' ? '#333' : 'white'};
   font-size: 0.9rem;
 
   &:focus {
     outline: none;
-    border-color: ${props => props.theme === 'light' ? '#2196f3' : '#61dafb'};
+    border-color: ${(props: ThemeProps) => props.theme === 'light' ? '#2196f3' : '#61dafb'};
   }
 `;
 
 const CommentButton = styled(motion.button)<ThemeProps>`
-  background-color: ${props => props.theme === 'light' ? '#2196f3' : '#61dafb'};
-  color: ${props => props.theme === 'light' ? 'white' : '#1a1a1a'};
+  background-color: ${(props: ThemeProps) => props.theme === 'light' ? '#2196f3' : '#61dafb'};
+  color: ${(props: ThemeProps) => props.theme === 'light' ? 'white' : '#1a1a1a'};
   border: none;
   border-radius: 4px;
   padding: 8px 16px;
@@ -81,19 +81,19 @@ const CommentButton = styled(motion.button)<ThemeProps>`
   font-weight: 500;
 
   &:disabled {
-    background-color: ${props => props.theme === 'light' ? '#e0e0e0' : '#444'};
-    color: ${props => props.theme === 'light' ? '#999' : '#666'};
+    background-color: ${(props: ThemeProps) => props.theme === 'light' ? '#e0e0e0' : '#444'};
+    color: ${(props: ThemeProps) => props.theme === 'light' ? '#999' : '#666'};
     cursor: not-allowed;
   }
 
   &:hover:not(:disabled) {
-    background-color: ${props => props.theme === 'light' ? '#1976d2' : '#4fa8d1'};
+    background-color: ${(props: ThemeProps) => props.theme === 'light' ? '#1976d2' : '#4fa8d1'};
   }
 `;
 
 const NoComments = styled.div<ThemeProps>`
   text-align: center;
-  color: ${props => props.theme === 'light' ? '#999' : '#666'};
+  color: ${(props: ThemeProps) => props.theme === 'light' ? '#999' : '#666'};
   padding: 12px;
   font-size: 0.9rem;
 `;
@@ -103,12 +103,12 @@ const CommentSection: React.FC<CommentSectionProps> = ({
   comments,
   onAddComment,
   theme,
-}) => {
+}: CommentSectionProps) => {
   const [newComment, setNewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { currentUser, userSettings } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!newComment.trim() || isSubmitting) return;
 
@@ -123,7 +123,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
     }
   };
 
-  const formatDate = (timestamp: number) => {
+  const formatDate = (timestamp: number): string => {
     const date = new Date(timestamp);
     return date.toLocaleString();
   };
@@ -135,8 +135,8 @@ const CommentSection: React.FC<CommentSectionProps> = ({
           <NoComments theme={theme}>No comments yet</NoComments>
         ) : (
           comments
-            .sort((a, b) => b.createdAt - a.createdAt)
-            .map((comment) => (
+            .sort((a: Comment, b: Comment) => b.createdAt - a.createdAt)
+            .map((comment: Comment) => (
               <CommentItem key={comment.id} theme={theme}>
                 <CommentHeader theme={theme}>
                   <span>{userSettings?.name || comment.userEmail}</span>
@@ -152,7 +152,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
           type="text"
           placeholder="Add a comment..."
           value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewComment(e.target.value)}
           theme={theme}
         />
         <CommentButton
