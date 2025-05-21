@@ -8,6 +8,17 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
+import styled from '@emotion/styled';
+
+const LoadingContainer = styled.div`
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #1a1a1a;
+  color: #61dafb;
+  font-size: 1.5rem;
+`;
 
 interface AuthContextType {
   currentUser: User | null;
@@ -68,7 +79,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {loading ? (
+        <LoadingContainer>Loading...</LoadingContainer>
+      ) : (
+        children
+      )}
     </AuthContext.Provider>
   );
 }; 
