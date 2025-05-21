@@ -24,6 +24,7 @@ const ItemContainer = styled(motion.div)`
   gap: 12px;
   cursor: pointer;
   user-select: none;
+  position: relative;
   
   &:hover {
     background-color: #333;
@@ -46,6 +47,9 @@ const Content = styled.div<{ completed: boolean }>`
 const Title = styled.h3`
   margin: 0 0 8px 0;
   font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 `;
 
 const Description = styled.p`
@@ -57,11 +61,14 @@ const Description = styled.p`
 const TimeInfo = styled.div`
   font-size: 0.8rem;
   color: #666;
+  margin-bottom: 8px;
 `;
 
 const ButtonGroup = styled.div`
   display: flex;
   gap: 8px;
+  align-items: flex-start;
+  margin-left: auto;
 `;
 
 const Button = styled.button<{ variant?: 'danger' | 'secondary' }>`
@@ -81,6 +88,9 @@ const Button = styled.button<{ variant?: 'danger' | 'secondary' }>`
   padding: 8px 12px;
   cursor: pointer;
   font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
   
   &:hover {
     background-color: ${props => {
@@ -99,7 +109,35 @@ const Button = styled.button<{ variant?: 'danger' | 'secondary' }>`
 const CollaboratorCount = styled.div`
   font-size: 0.8rem;
   color: #61dafb;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background-color: rgba(97, 218, 251, 0.1);
+  border-radius: 4px;
+  margin-left: 8px;
+`;
+
+const CollaboratorIcon = styled.span`
+  color: #61dafb;
+  font-size: 1rem;
+`;
+
+const CollaboratorInfo = styled.div`
   margin-top: 8px;
+  font-size: 0.8rem;
+  color: #999;
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: 8px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const ShareIcon = styled.span`
+  font-size: 1rem;
+  margin-right: 4px;
 `;
 
 const TodoItem: React.FC<TodoItemProps> = ({
@@ -113,6 +151,14 @@ const TodoItem: React.FC<TodoItemProps> = ({
   const [showCollaborators, setShowCollaborators] = useState(false);
   const { currentUser } = useAuth();
   const isOwner = currentUser?.uid === todo.ownerId;
+  
+  console.log('TodoItem:', {
+    todoId: todo.id,
+    currentUserId: currentUser?.uid,
+    todoOwnerId: todo.ownerId,
+    isOwner,
+    hasCollaborators: todo.collaborators.length > 0
+  });
 
   const handleAddCollaborator = async (email: string) => {
     await onAddCollaborator(todo.id, email);
@@ -137,7 +183,15 @@ const TodoItem: React.FC<TodoItemProps> = ({
           onChange={() => onToggle(todo.id)}
         />
         <Content completed={todo.completed}>
-          <Title>{todo.title}</Title>
+          <Title>
+            {todo.title}
+            {todo.collaborators.length > 0 && (
+              <CollaboratorCount>
+                <CollaboratorIcon>👥</CollaboratorIcon>
+                {todo.collaborators.length}
+              </CollaboratorCount>
+            )}
+          </Title>
           <Description>{todo.description}</Description>
           {todo.startTime && todo.endTime && (
             <TimeInfo>
@@ -145,9 +199,10 @@ const TodoItem: React.FC<TodoItemProps> = ({
             </TimeInfo>
           )}
           {todo.collaborators.length > 0 && (
-            <CollaboratorCount>
-              {todo.collaborators.length} collaborator{todo.collaborators.length !== 1 ? 's' : ''}
-            </CollaboratorCount>
+            <CollaboratorInfo>
+              <CollaboratorIcon>👥</CollaboratorIcon>
+              Shared with: {todo.collaborators.map(c => c.email).join(', ')}
+            </CollaboratorInfo>
           )}
         </Content>
         <ButtonGroup>
@@ -156,6 +211,7 @@ const TodoItem: React.FC<TodoItemProps> = ({
               variant="secondary"
               onClick={() => setShowCollaborators(true)}
             >
+              <ShareIcon>🔗</ShareIcon>
               Share
             </Button>
           )}

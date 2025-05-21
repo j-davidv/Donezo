@@ -6,7 +6,7 @@ import TodoList from './components/TodoList';
 import AddTodoForm from './components/AddTodoForm';
 import Login from './components/Auth/Login';
 import Signup from './components/Auth/Signup';
-import { Todo } from './types';
+import { Todo, TodoFormData } from './types';
 import { collection, addDoc, deleteDoc, doc, updateDoc, query, where, onSnapshot, getDocs } from 'firebase/firestore';
 import { db } from './firebase';
 import { auth } from './firebase';
@@ -70,6 +70,8 @@ const TodoApp: React.FC = () => {
   React.useEffect(() => {
     if (!currentUser) return;
 
+    console.log('Current user ID:', currentUser.uid);
+    
     // Query todos where user is either owner or collaborator
     const q = query(
       collection(db, 'todos'),
@@ -78,25 +80,35 @@ const TodoApp: React.FC = () => {
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const todosData: Todo[] = [];
+      console.log('Number of todos found:', querySnapshot.size);
       querySnapshot.forEach((doc) => {
-        todosData.push({ ...doc.data() as Todo, id: doc.id });
+        const todoData = { ...doc.data() as Todo, id: doc.id };
+        console.log('Todo data:', todoData);
+        todosData.push(todoData);
       });
-      setTodos(todosData);
+      setTodos(todosData.sort((a, b) => (b.lastModifiedAt || 0) - (a.lastModifiedAt || 0)));
     });
 
     return () => unsubscribe();
   }, [currentUser]);
 
-  const addTodo = async (todo: Todo) => {
+  const addTodo = async (todoData: TodoFormData) => {
     try {
-      await addDoc(collection(db, 'todos'), {
-        ...todo,
-        ownerId: currentUser?.uid,
-        sharedWith: [currentUser?.uid],
+      if (!currentUser) return;
+      
+      const newTodo = {
+        ...todoData,
+        completed: false,
+        ownerId: currentUser.uid,
+        sharedWith: [currentUser.uid],
         collaborators: [],
-        lastModifiedBy: currentUser?.uid,
+        lastModifiedBy: currentUser.uid,
         lastModifiedAt: Date.now()
-      });
+      };
+
+      console.log('Creating new todo:', newTodo);
+      const docRef = await addDoc(collection(db, 'todos'), newTodo);
+      console.log('Todo created with ID:', docRef.id);
     } catch (error) {
       console.error('Error adding todo:', error);
     }
@@ -104,11 +116,13 @@ const TodoApp: React.FC = () => {
 
   const updateTodo = async (id: string, updatedTodo: Todo) => {
     try {
+      if (!currentUser) return;
+      
       const todoRef = doc(db, 'todos', id);
       const { id: _, ...todoData } = updatedTodo;
       await updateDoc(todoRef, {
         ...todoData,
-        lastModifiedBy: currentUser?.uid,
+        lastModifiedBy: currentUser.uid,
         lastModifiedAt: Date.now()
       });
     } catch (error) {
@@ -141,6 +155,8 @@ const TodoApp: React.FC = () => {
 
   const addCollaborator = async (todoId: string, email: string) => {
     try {
+      if (!currentUser) return;
+
       // Find user by email
       const usersRef = collection(db, 'users');
       const q = query(usersRef, where('email', '==', email));
@@ -162,10 +178,15 @@ const TodoApp: React.FC = () => {
         throw new Error('User is already a collaborator');
       }
 
+      // Check if trying to add the owner
+      if (todo.ownerId === collaborator.id) {
+        throw new Error('Cannot add owner as collaborator');
+      }
+
       await updateDoc(todoRef, {
         collaborators: [...todo.collaborators, { id: collaborator.id, email }],
         sharedWith: [...todo.sharedWith, collaborator.id],
-        lastModifiedBy: currentUser?.uid,
+        lastModifiedBy: currentUser.uid,
         lastModifiedAt: Date.now()
       });
     } catch (error) {

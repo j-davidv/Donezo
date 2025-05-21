@@ -6,7 +6,8 @@ import {
   onAuthStateChanged,
   User
 } from 'firebase/auth';
-import { auth } from '../firebase';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { auth, db } from '../firebase';
 
 interface AuthContextType {
   currentUser: User | null;
@@ -39,7 +40,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signup = async (email: string, password: string) => {
-    await createUserWithEmailAndPassword(auth, email, password);
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    
+    // Create a user document in Firestore
+    await setDoc(doc(db, 'users', user.uid), {
+      email: user.email,
+      createdAt: Date.now(),
+      todos: [] // Array of todo IDs that the user owns or collaborates on
+    });
   };
 
   const login = async (email: string, password: string) => {

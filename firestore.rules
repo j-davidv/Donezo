@@ -1,0 +1,53 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user owns the document
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    // Helper function to check if user is a collaborator
+    function isCollaborator(todoData) {
+      return request.auth.uid in todoData.sharedWith;
+    }
+    
+    // Users collection rules
+    match /users/{userId} {
+      allow read: if isAuthenticated() && isOwner(userId);
+      allow create: if isAuthenticated() && isOwner(userId);
+      allow update: if isAuthenticated() && isOwner(userId);
+    }
+    
+    // Todos collection rules
+    match /todos/{todoId} {
+      // Allow read if user is owner or collaborator
+      allow read: if isAuthenticated() && (
+        isOwner(resource.data.ownerId) || isCollaborator(resource.data)
+      );
+      
+      // Allow create if user is authenticated (they will be set as owner)
+      allow create: if isAuthenticated() && (
+        request.resource.data.ownerId == request.auth.uid &&
+        request.resource.data.sharedWith.hasAll([request.auth.uid])
+      );
+      
+      // Allow update if user is owner or collaborator
+      allow update: if isAuthenticated() && (
+        isOwner(resource.data.ownerId) || isCollaborator(resource.data)
+      ) && (
+        // Prevent changing ownership
+        request.resource.data.ownerId == resource.data.ownerId &&
+        // Ensure sharedWith array always contains the owner
+        request.resource.data.sharedWith.hasAll([resource.data.ownerId])
+      );
+      
+      // Allow delete if user is owner
+      allow delete: if isAuthenticated() && isOwner(resource.data.ownerId);
+    }
+  }
+} 

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
-import { Todo, TodoFormData } from '../types';
+import { TodoFormData } from '../types';
 
 interface AddTodoFormProps {
-  onAdd: (todo: Todo) => void;
+  onAdd: (todo: TodoFormData) => void;
 }
 
 const FormContainer = styled.form`
@@ -90,23 +90,15 @@ const AddTodoForm: React.FC<AddTodoFormProps> = ({ onAdd }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const newTodo: Todo = {
-      ...formData,
-      id: Date.now().toString(),
-      completed: false,
-      // Only include times if both are filled
-      ...(formData.startTime && formData.endTime ? {
-        startTime: formData.startTime,
-        endTime: formData.endTime,
-      } : {}),
-    };
-    onAdd(newTodo);
-    setFormData({
-      title: '',
-      description: '',
-      startTime: '',
-      endTime: '',
-    });
+    if (isFormValid()) {
+      onAdd(formData);
+      setFormData({
+        title: '',
+        description: '',
+        startTime: '',
+        endTime: '',
+      });
+    }
   };
 
   const isFormValid = () => {
