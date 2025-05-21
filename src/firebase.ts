@@ -11,7 +11,7 @@ const firebaseConfig = {
   storageBucket: "donezo-530ac.firebasestorage.app",
   messagingSenderId: "820763087623",
   appId: "1:820763087623:web:db0d74b260267843b52ba2"
-  measurementId: "G-FNXTPZX18Q"
+  measurementId: "G-FNXTPZX18Q",
 };
 
 const app = initializeApp(firebaseConfig);
