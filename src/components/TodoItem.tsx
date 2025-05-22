@@ -29,20 +29,21 @@ const ItemContainer = styled(motion.div)<ThemeProps>`
   padding: 16px;
   margin: 8px 0;
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: stretch;
   gap: 12px;
   user-select: none;
   position: relative;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   touch-action: pan-y;
+  width: 100%;
+  box-sizing: border-box;
   
   &:hover {
     background-color: ${props => props.theme === 'light' ? '#f5f5f5' : '#333'};
   }
 
   @media (max-width: 480px) {
-    flex-direction: column;
     padding: 12px;
   }
 `;
@@ -51,8 +52,7 @@ const MainContent = styled.div`
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  flex: 1;
-  min-width: 0;
+  width: 100%;
 `;
 
 const Checkbox = styled.input`
@@ -65,6 +65,7 @@ const Checkbox = styled.input`
 const Content = styled.div<{ completed: boolean; theme: 'light' | 'dark' }>`
   flex: 1;
   min-width: 0;
+  width: 100%;
   text-decoration: ${props => props.completed ? 'line-through' : 'none'};
   color: ${props => {
     if (props.completed) {
@@ -100,9 +101,10 @@ const ButtonGroup = styled.div`
   align-items: center;
   margin-left: auto;
   flex-wrap: wrap;
+  width: 100%;
+  justify-content: flex-end;
   
   @media (max-width: 480px) {
-    width: 100%;
     margin-left: 0;
     margin-top: 12px;
     justify-content: flex-start;
