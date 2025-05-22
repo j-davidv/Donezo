@@ -16,10 +16,10 @@ interface ThemeProps {
 }
 
 const Container = styled.div<ThemeProps>`
-  margin-top: 16px;
-  padding: 16px;
+  margin-top: 12px;
+  padding: 12px;
   background-color: ${props => props.theme === 'light' ? '#f8f9fa' : '#1e1e1e'};
-  border-radius: 8px;
+  border-radius: 6px;
   border: 1px solid ${props => props.theme === 'light' ? '#e9ecef' : '#2d2d2d'};
   width: 100%;
   box-sizing: border-box;
@@ -29,17 +29,17 @@ const Container = styled.div<ThemeProps>`
 `;
 
 const CommentList = styled.div`
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   width: 100%;
 `;
 
 const CommentItem = styled.div<ThemeProps>`
   background-color: ${props => props.theme === 'light' ? '#fff' : '#2a2a2a'};
-  padding: 12px;
-  border-radius: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
   border: 1px solid ${props => props.theme === 'light' ? '#eee' : '#444'};
   overflow-wrap: break-word;
   word-wrap: break-word;
@@ -52,22 +52,22 @@ const CommentHeader = styled.div<ThemeProps>`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
-  font-size: 0.85rem;
+  margin-bottom: 4px;
+  font-size: 0.8rem;
   color: ${props => props.theme === 'light' ? '#666' : '#999'};
-  gap: 12px;
+  gap: 8px;
 
   @media (max-width: 480px) {
     flex-direction: column;
     align-items: flex-start;
-    gap: 4px;
+    gap: 2px;
   }
 `;
 
 const CommentText = styled.div<ThemeProps>`
   color: ${props => props.theme === 'light' ? '#333' : '#fff'};
-  font-size: 0.95rem;
-  line-height: 1.4;
+  font-size: 0.85rem;
+  line-height: 1.3;
   white-space: pre-wrap;
   overflow-wrap: break-word;
   word-wrap: break-word;
@@ -77,7 +77,7 @@ const CommentText = styled.div<ThemeProps>`
 const CommentForm = styled.form`
   display: flex;
   gap: 8px;
-  margin-top: 16px;
+  margin-top: 12px;
   width: 100%;
   box-sizing: border-box;
 
@@ -91,11 +91,11 @@ const CommentInput = styled.textarea<ThemeProps>`
   background-color: ${props => props.theme === 'light' ? '#fff' : '#333'};
   border: 1px solid ${props => props.theme === 'light' ? '#ddd' : '#444'};
   border-radius: 4px;
-  padding: 8px 12px;
+  padding: 6px 10px;
   color: ${props => props.theme === 'light' ? '#333' : 'white'};
-  font-size: 0.95rem;
-  min-height: 60px;
-  max-height: 200px;
+  font-size: 0.85rem;
+  min-height: 36px;
+  max-height: 120px;
   resize: vertical;
   font-family: inherit;
   width: 100%;
@@ -116,12 +116,13 @@ const CommentButton = styled(motion.button)<ThemeProps>`
   color: ${props => props.theme === 'light' ? 'white' : '#1a1a1a'};
   border: none;
   border-radius: 4px;
-  padding: 8px 16px;
+  padding: 6px 12px;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 500;
   height: fit-content;
   align-self: flex-start;
+  min-width: 60px;
 
   @media (max-width: 480px) {
     width: 100%;
@@ -141,10 +142,10 @@ const CommentButton = styled(motion.button)<ThemeProps>`
 const NoComments = styled.div<ThemeProps>`
   text-align: center;
   color: ${props => props.theme === 'light' ? '#999' : '#666'};
-  padding: 24px;
-  font-size: 0.9rem;
+  padding: 16px;
+  font-size: 0.85rem;
   background-color: ${props => props.theme === 'light' ? '#f5f5f5' : '#333'};
-  border-radius: 8px;
+  border-radius: 6px;
 `;
 
 const CommentSection: React.FC<CommentSectionProps> = ({
