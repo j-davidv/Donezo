@@ -12,6 +12,7 @@ interface TodoListProps {
   onAddCollaborator: (todoId: string, email: string) => Promise<void>;
   onRemoveCollaborator: (todoId: string, userId: string) => Promise<void>;
   onAddComment: (todoId: string, text: string) => Promise<void>;
+  onEdit: (todoId: string, title: string, description: string, startTime: string, endTime: string) => Promise<void>;
   theme: 'light' | 'dark';
 }
 
@@ -133,8 +134,9 @@ const TodoItem_Draggable: React.FC<{
   onAddCollaborator: (todoId: string, email: string) => Promise<void>;
   onRemoveCollaborator: (todoId: string, userId: string) => Promise<void>;
   onAddComment: (todoId: string, text: string) => Promise<void>;
+  onEdit: (todoId: string, title: string, description: string, startTime: string, endTime: string) => Promise<void>;
   theme: 'light' | 'dark';
-}> = ({ todo, onDelete, onToggle, onAddCollaborator, onRemoveCollaborator, onAddComment, theme }) => {
+}> = ({ todo, onDelete, onToggle, onAddCollaborator, onRemoveCollaborator, onAddComment, onEdit, theme }) => {
   const controls = useDragControls();
   
   return (
@@ -150,6 +152,7 @@ const TodoItem_Draggable: React.FC<{
         onAddCollaborator={onAddCollaborator}
         onRemoveCollaborator={onRemoveCollaborator}
         onAddComment={onAddComment}
+        onEdit={onEdit}
         theme={theme}
         dragHandle={
           <DragHandle 
@@ -173,6 +176,7 @@ const TodoList: React.FC<TodoListProps> = ({
   onAddCollaborator,
   onRemoveCollaborator,
   onAddComment,
+  onEdit,
   theme,
 }) => {
   const incompleteTodos = todos.filter(todo => !todo.completed);
@@ -223,6 +227,7 @@ const TodoList: React.FC<TodoListProps> = ({
             onAddCollaborator={onAddCollaborator}
             onRemoveCollaborator={onRemoveCollaborator}
             onAddComment={onAddComment}
+            onEdit={onEdit}
             theme={theme}
           />
         ))}
@@ -242,6 +247,7 @@ const TodoList: React.FC<TodoListProps> = ({
               onAddCollaborator={onAddCollaborator}
               onRemoveCollaborator={onRemoveCollaborator}
               onAddComment={onAddComment}
+              onEdit={onEdit}
               theme={theme}
             />
           ))}

@@ -139,7 +139,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
             .map((comment: Comment) => (
               <CommentItem key={comment.id} theme={theme}>
                 <CommentHeader theme={theme}>
-                  <span>{userSettings?.name || comment.userEmail}</span>
+                  <span>{comment.userName}</span>
                   <span>{formatDate(comment.createdAt)}</span>
                 </CommentHeader>
                 <CommentText theme={theme}>{comment.text}</CommentText>

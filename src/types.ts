@@ -3,6 +3,7 @@ export interface Comment {
   text: string;
   userId: string;
   userEmail: string;
+  userName: string;
   createdAt: number;
 }
 
@@ -35,4 +36,15 @@ export interface TodoFormData {
 export interface CollaboratorData {
   email: string;
   id: string;
+}
+
+export interface SavedCollaborator {
+  id: string;
+  email: string;
+}
+
+export interface UserSettings {
+  theme: 'light' | 'dark';
+  name?: string;
+  savedCollaborators?: SavedCollaborator[];
 } 

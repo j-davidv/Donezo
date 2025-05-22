@@ -5,6 +5,7 @@ import { Todo } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import CollaboratorModal from './CollaboratorModal';
 import CommentSection from './CommentSection';
+import EditTodoModal from './EditTodoModal';
 
 interface TodoItemProps {
   todo: Todo;
@@ -13,6 +14,7 @@ interface TodoItemProps {
   onAddCollaborator: (todoId: string, email: string) => Promise<void>;
   onRemoveCollaborator: (todoId: string, userId: string) => Promise<void>;
   onAddComment: (todoId: string, text: string) => Promise<void>;
+  onEdit: (todoId: string, title: string, description: string, startTime: string, endTime: string) => Promise<void>;
   theme: 'light' | 'dark';
   dragHandle?: React.ReactNode;
 }
@@ -168,8 +170,24 @@ const CollaboratorInfo = styled.div<ThemeProps>`
   padding: 8px;
   border-radius: 4px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
+  flex-wrap: wrap;
+  word-break: break-word;
+  max-width: 100%;
+  
+  @media (max-width: 480px) {
+    font-size: 0.75rem;
+    padding: 6px;
+    margin-top: 6px;
+  }
+`;
+
+const CollaboratorEmails = styled.span`
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
 `;
 
 const ShareIcon = styled.span`
@@ -184,11 +202,13 @@ const TodoItem: React.FC<TodoItemProps> = ({
   onAddCollaborator,
   onRemoveCollaborator,
   onAddComment,
+  onEdit,
   theme,
   dragHandle
 }) => {
   const [showCollaborators, setShowCollaborators] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const { currentUser } = useAuth();
   const isOwner = currentUser?.uid === todo.ownerId;
   const isCollaborator = todo.collaborators.some(c => c.id === currentUser?.uid);
@@ -245,7 +265,9 @@ const TodoItem: React.FC<TodoItemProps> = ({
           {todo.collaborators.length > 0 && (
             <CollaboratorInfo theme={theme}>
               <CollaboratorIcon theme={theme}>👥</CollaboratorIcon>
-              Shared with: {todo.collaborators.map(c => c.email).join(', ')}
+              <CollaboratorEmails>
+                Shared with: {todo.collaborators.map(c => c.email).join(', ')}
+              </CollaboratorEmails>
             </CollaboratorInfo>
           )}
         </Content>
@@ -254,22 +276,33 @@ const TodoItem: React.FC<TodoItemProps> = ({
       <ButtonGroup>
         {(isOwner || isCollaborator) && (
           <>
-            <Button
-              onClick={() => setShowComments(!showComments)}
-              variant="secondary"
-              theme={theme}
-            >
-              💬 {todo.comments?.length || 0}
-            </Button>
-            {isOwner && (
+            {todo.collaborators.length > 0 && (
               <Button
-                onClick={() => setShowCollaborators(true)}
+                onClick={() => setShowComments(!showComments)}
                 variant="secondary"
                 theme={theme}
               >
-                <ShareIcon>👥</ShareIcon>
-                Share
+                💬 {todo.comments?.length || 0}
               </Button>
+            )}
+            {isOwner && (
+              <>
+                <Button
+                  onClick={() => setShowEditModal(true)}
+                  variant="secondary"
+                  theme={theme}
+                >
+                  ✏️ Edit
+                </Button>
+                <Button
+                  onClick={() => setShowCollaborators(true)}
+                  variant="secondary"
+                  theme={theme}
+                >
+                  <ShareIcon>👥</ShareIcon>
+                  Share
+                </Button>
+              </>
             )}
           </>
         )}
@@ -297,6 +330,15 @@ const TodoItem: React.FC<TodoItemProps> = ({
           todoId={todo.id}
           comments={todo.comments || []}
           onAddComment={onAddComment}
+          theme={theme}
+        />
+      )}
+
+      {showEditModal && (
+        <EditTodoModal
+          todo={todo}
+          onClose={() => setShowEditModal(false)}
+          onSave={onEdit}
           theme={theme}
         />
       )}

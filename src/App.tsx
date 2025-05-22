@@ -8,7 +8,7 @@ import Login from './components/Auth/Login';
 import Signup from './components/Auth/Signup';
 import Settings from './components/Settings/Settings';
 import { Todo, TodoFormData } from './types';
-import { collection, addDoc, deleteDoc, doc, updateDoc, query, where, onSnapshot, getDocs } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, doc, updateDoc, query, where, onSnapshot, getDocs, getDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import { auth } from './firebase';
 
@@ -348,11 +348,17 @@ const TodoApp: React.FC = () => {
 
       if (!todo) return;
 
+      // Get the user's name from their settings
+      const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+      const userData = userDoc.data();
+      const userName = userData?.name || currentUser.email?.split('@')[0] || 'Unknown';
+
       const newComment = {
         id: crypto.randomUUID(),
         text,
         userId: currentUser.uid,
         userEmail: currentUser.email || 'Unknown',
+        userName: userName,
         createdAt: Date.now()
       };
 
@@ -363,6 +369,29 @@ const TodoApp: React.FC = () => {
       });
     } catch (error) {
       console.error('Error adding comment:', error);
+      throw error;
+    }
+  };
+
+  const editTodo = async (todoId: string, title: string, description: string, startTime: string, endTime: string) => {
+    try {
+      if (!currentUser) return;
+
+      const todoRef = doc(db, 'todos', todoId);
+      const todo = todos.find(t => t.id === todoId);
+
+      if (!todo) return;
+
+      await updateDoc(todoRef, {
+        title,
+        description,
+        startTime,
+        endTime,
+        lastModifiedBy: currentUser.uid,
+        lastModifiedAt: Date.now()
+      });
+    } catch (error) {
+      console.error('Error updating todo:', error);
       throw error;
     }
   };
@@ -391,7 +420,7 @@ const TodoApp: React.FC = () => {
           </LogoutButton>
         </HeaderButtons>
       </Header>
-      <AddTodoForm onAdd={addTodo} />
+      <AddTodoForm onAdd={addTodo} theme={userSettings?.theme || 'dark'} />
       <TodoList
         todos={todos}
         onDelete={deleteTodo}
@@ -400,6 +429,7 @@ const TodoApp: React.FC = () => {
         onAddCollaborator={addCollaborator}
         onRemoveCollaborator={removeCollaborator}
         onAddComment={addComment}
+        onEdit={editTodo}
         theme={userSettings?.theme || 'dark'}
       />
       {showSettings && (
